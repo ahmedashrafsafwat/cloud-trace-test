@@ -30,8 +30,6 @@ import { Stream } from 'stream';
 import { extract as tarExtract } from 'tar-stream';
 import * as csv from '@fast-csv/parse';
 import sql, { getKnex } from '../db';
-import cpcTest1 from '../fixtures/cpc-req-test1.json';
-import cpcTest2 from '../fixtures/cpc-req-test2.json';
 import VatDefinitionPicker, {
   VatDefinitionSelection,
 } from './vatDefinitionPicker';
@@ -1406,20 +1404,10 @@ export async function initCashPointClosingsAndExportsFromFixtures(
   // insert cash point closing 1
   const closingId1 = uuidv4();
   const closingId2 = uuidv4();
-  const payload1 = JSON.parse(
-    replaceTxIdPlaceholders(JSON.stringify(cpcTest1)).replace(
-      /{{client_id}}/g,
-      clientId,
-    ),
-  );
+  const payload1 = {};
 
-  const payload2 = JSON.parse(
-    replaceTxIdPlaceholders(JSON.stringify(cpcTest2))
-      .replace(/{{client_id}}/g, clientId)
-      .replace(/{{purchaser_agency_id}}/g, purchaser_agency_id)
-      .replace(/{{clientIdSlave}}/g, clientIdSlave)
-      .replace(/{{guid}}/g, uuidv4()),
-  );
+  const payload2 = {};
+
   await fastify.inject({
     method: 'PUT',
     url: `${basePath}/cash_point_closings/${closingId1}`,

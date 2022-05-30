@@ -6,8 +6,6 @@ import {
   ClosingQueueMessage,
 } from '../models';
 import constants from '../constants';
-import { ExportPrepMessage } from '../consumers/exportPrep';
-import { ClosingPrepQueueMessage } from '../consumers/closingPrep';
 
 class Queue {
   static DSFINVK_V0_EXPORT_PREP_QUEUE = 'dsfinvk_export_prep_queue_v0';
@@ -76,9 +74,7 @@ class Queue {
       | ExportQueueMessage
       | SignQueueMessage
       | ClosingSignQueueMessage
-      | ClosingQueueMessage
-      | ExportPrepMessage
-      | ClosingPrepQueueMessage,
+      | ClosingQueueMessage,
   ): Promise<Channel> {
     if (!Queue.channel) {
       await this.init();

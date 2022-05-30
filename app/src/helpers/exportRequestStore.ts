@@ -1,5 +1,4 @@
 import { getKnex } from '../db';
-import { ExportMessage } from '../routes/api/exports';
 import { ExportQueueMessage } from '../models';
 
 export default async function insertExportRequest(
@@ -8,7 +7,7 @@ export default async function insertExportRequest(
   env: string,
   signQueueMessage?: {
     queueName: string;
-    message: ExportMessage | ExportQueueMessage;
+    message: ExportQueueMessage;
   },
 ) {
   const knex = getKnex();
