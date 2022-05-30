@@ -1,19 +1,27 @@
-FROM node:lts-jessie
+FROM node:18.0-alpine AS development
+EXPOSE 3000/tcp
+WORKDIR /app
+COPY package.json .
+RUN npm i
 
-# Set the work directory
-RUN mkdir -p /var/www/app
-WORKDIR /var/www/app
+FROM development AS production
+RUN npm prune --production
 
-# Add our package.json and install *before* adding our application files
-ADD app/package.json ./
-RUN npm i --production
+FROM development AS build
+COPY . .
+RUN npm run build
 
-# Install pm2 *globally* so we can run our application
-RUN npm i -g pm2
-
-# Add application files
-ADD app /var/www/app
-
-EXPOSE 4000
-
-CMD ["pm2", "start", "process.json", "--no-daemon"]
+FROM alpine:3.15 AS runtime
+ENV NODE_ENV=production
+WORKDIR /app
+RUN addgroup -g 9999 app \
+    && adduser -u 9999 -G app -h /app -s /bin/false -D app \
+    && apk add --no-cache postgresql-client
+COPY --from=development /usr/lib/libgcc* /usr/lib/libstdc* /usr/lib/
+COPY --from=development /usr/local /usr/local
+COPY --from=production /app/node_modules /app/node_modules
+COPY --from=build /app/build /app
+COPY public /app/public
+USER app
+EXPOSE 3000/tcp
+CMD [ "node", "." ]
