@@ -1,14 +1,165 @@
 {
-  "name": "app",
-  "version": "0.0.1",
-  "description": "Simple app",
-  "main": "index.js",
+  "name": "fiskaly-dsfinvk",
+  "version": "1.4.0",
+  "description": "fiskaly DSFinV-K API",
+  "author": "fiskaly GmbH",
+  "main": "src/server.js",
+  "private": true,
   "scripts": {
-    "start": "node index.js"
+    "migrate": "ley --cwd src --client postgres",
+    "new-migration": "ley --cwd src --client postgres new",
+    "wait-on": "wait-on tcp:${POSTGRES_HOST:=postgres-service}:${POSTGRES_PORT:=5432} -d 1000 -t 15000",
+    "test": "npm run wait-on && npm run migrate up && npm run lint:no-fix && npm run check-types && c8 ava --fail-fast -s 'src/**/*.test.ts'",
+    "test:all": "npm run wait-on && npm run migrate up && npm run lint:no-fix && npm run check-types && ava --fail-fast -s",
+    "build": "tsc && copyfiles 'public/**/*' 'src/**/*.js' 'src/**/*.xml' 'src/**/*.dtd' build",
+    "start": "npm run wait-on && npm run migrate up && ts-node src/scripts/run-sql-migrations.ts && ts-node-dev --respawn src/server.ts | pino-pretty",
+    "start-export-consumer": "npm run wait-on && ts-node-dev --respawn src/exportConsumer.ts | pino-pretty",
+    "start-export-consumer-test": "npm run wait-on && DSFINVK_EXPORT_QUEUE_SWITCH=TEST ts-node-dev --respawn src/exportConsumer.ts | pino-pretty",
+    "start-export-prep-consumer": "npm run wait-on && ts-node-dev --respawn src/consumers/exportPrep | pino-pretty",
+    "start-closing-prep-consumer": "npm run wait-on && ts-node-dev --respawn src/consumers/closingPrep | pino-pretty",
+    "start-closing-consumer": "npm run wait-on && ts-node-dev --respawn src/closingConsumer.ts | pino-pretty",
+    "start-mock-sign-consumer": "npm run wait-on && ts-node-dev --respawn src/mockSignConsumer.ts | pino-pretty",
+    "lint": "eslint --fix 'src/**/*.{ts,js,json}'",
+    "lint:no-fix": "eslint 'src/**/*.{ts,js,json}'",
+    "prettier": "prettier --write '{src,docs}/**/*.{ts,js,json,css,md,yaml,yml}'",
+    "check-types": "tsc --noEmit"
   },
-  "author": "Sergey Onufrienko",
-  "license": "MIT",
   "dependencies": {
-    "express": "^4.17.1"
+    "@fast-csv/parse": "4.3.6",
+    "@google-cloud/monitoring": "2.3.5",
+    "@google-cloud/trace-agent": "5.1.6",
+    "ajv": "8.11.0",
+    "ajv-formats": "2.1.1",
+    "ajv-keywords": "5.1.0",
+    "amqplib": "0.8.0",
+    "csv-writer": "1.6.0",
+    "date-fns": "2.28.0",
+    "env-schema": "1.1.0",
+    "fast-json-parse": "1.0.3",
+    "fastify": "2.15.3",
+    "fastify-cors": "3.0.3",
+    "fastify-plugin": "1.6.1",
+    "fastify-redis": "4.3.1",
+    "fastify-static": "2.6.0",
+    "got": "10.7.0",
+    "http-errors": "1.7.3",
+    "ioredis": "4.27.8",
+    "keyfetch": "1.2.1",
+    "knex": "2.0.0",
+    "ley": "0.7.1",
+    "minio": "7.0.28",
+    "number-precision": "1.5.2",
+    "pg": "8.7.3",
+    "pg-query-stream": "4.2.3",
+    "pino": "6.14.0",
+    "postgres": "1.0.2",
+    "secure-json-parse": "2.4.0",
+    "semver": "7.3.7",
+    "sqlstring": "2.3.3",
+    "strip-indent": "3.0.0",
+    "tar": "6.1.11",
+    "tar-stream": "2.2.0",
+    "traverse": "0.6.6",
+    "uuid": "8.3.2",
+    "xml2js": "0.4.23",
+    "xmlbuilder2": "2.4.1"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "13.1.0",
+    "@commitlint/config-conventional": "13.1.0",
+    "@types/amqplib": "0.5.17",
+    "@types/diff": "5.0.2",
+    "@types/minio": "7.0.7",
+    "@types/node": "13.9.8",
+    "@types/node-fetch": "2.5.10",
+    "@types/tar": "4.0.4",
+    "@types/tar-stream": "2.2.0",
+    "@types/xml2js": "0.4.8",
+    "@typescript-eslint/eslint-plugin": "5.11.0",
+    "@typescript-eslint/parser": "5.11.0",
+    "ava": "4.2.0",
+    "c8": "7.11.2",
+    "copyfiles": "2.4.1",
+    "diff": "5.0.0",
+    "eslint": "8.13.0",
+    "eslint-config-prettier": "8.5.0",
+    "eslint-plugin-prettier": "4.0.0",
+    "husky": "7.0.4",
+    "json-schema-to-typescript": "9.1.1",
+    "kleur": "4.1.4",
+    "lint-staged": "12.4.0",
+    "pino-pretty": "4.0.0",
+    "prettier": "2.5.1",
+    "proxyquire": "2.1.3",
+    "ts-node": "10.7.0",
+    "ts-node-dev": "1.1.8",
+    "typescript": "4.3.5",
+    "validator": "13.7.0",
+    "wait-on": "6.0.1"
+  },
+  "ava": {
+    "extensions": [
+      "ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
+  },
+  "c8": {
+    "reporter": [
+      "text",
+      "lcov"
+    ],
+    "exclude": [
+      "./src/migrations/*",
+      "**/*.+(test|spec).+(js|ts)"
+    ]
+  },
+  "prettier": {
+    "arrowParens": "always",
+    "endOfLine": "lf",
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "all"
+  },
+  "eslintConfig": {
+    "parser": "@typescript-eslint/parser",
+    "extends": [
+      "plugin:@typescript-eslint/recommended",
+      "plugin:prettier/recommended",
+      "prettier"
+    ],
+    "parserOptions": {
+      "ecmaVersion": 2018,
+      "sourceType": "module"
+    },
+    "rules": {
+      "camelcase": "off",
+      "@typescript-eslint/camelcase": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/explicit-module-boundary-types": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          "argsIgnorePattern": "^_"
+        }
+      ],
+      "no-unused-vars": "off"
+    }
+  },
+  "lint-staged": {
+    "src/**/*.{ts,js,tsx}": [
+      "npm run lint"
+    ],
+    "src/**/*.{ts,js,json,css,md,yaml,yml}": [
+      "prettier --write"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "pre-commit": "lint-staged"
+    }
   }
 }

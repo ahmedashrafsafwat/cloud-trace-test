@@ -1,0 +1,1104 @@
+{
+  "title": "Fiskaly Schema basierend auf der DFKA Taxonomie",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Version 2.1.1",
+  "definitions": {
+    "name": {
+      "type": "string",
+      "description": "Hier ist der aktuelle offizielle (Unternehmens)name anzugeben.",
+      "minLength": 1,
+      "maxLength": 60
+    },
+    "country_code": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 3,
+      "pattern": "^[A-Z]{3}$",
+      "description": "Country code according to ISO 3166 alpha-3"
+    },
+    "address_strict": {
+      "type": "object",
+      "properties": {
+        "street": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "postal_code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10
+        },
+        "city": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 62
+        },
+        "country_code": {
+          "$ref": "#/definitions/country_code"
+        }
+      },
+      "required": ["street", "postal_code", "city", "country_code"]
+    },
+    "address_optional": {
+      "type": "object",
+      "properties": {
+        "street": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "postal_code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10
+        },
+        "city": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 62
+        },
+        "country_code": {
+          "$ref": "#/definitions/country_code"
+        }
+      }
+    },
+    "tax_number": {
+      "type": "string",
+      "description": "Es muss entweder die Steuernummer (tax_number) oder USt-Id-Nummer (vat_id_number) des Unternehmens angegeben werden (§ 14 Abs. 4 Nr. 2 UStG)",
+      "minLength": 1,
+      "maxLength": 20
+    },
+    "vat_id_number": {
+      "type": "string",
+      "description": "Umsatzsteuer-Identifikationsnummer",
+      "minLength": 1,
+      "maxLength": 15,
+      "pattern": "^[A-Z]{2}.{1,13}$"
+    },
+    "vat_amount_gross_and_net": {
+      "type": "object",
+      "properties": {
+        "incl_vat": {
+          "type": "number",
+          "minimum": -9999999999.99999,
+          "maximum": 9999999999.99999,
+          "multipleOf": 0.00001
+        },
+        "excl_vat": {
+          "type": "number",
+          "minimum": -9999999999.99999,
+          "maximum": 9999999999.99999,
+          "multipleOf": 0.00001
+        },
+        "vat": {
+          "type": "number",
+          "minimum": -9999999999.99999,
+          "maximum": 9999999999.99999,
+          "multipleOf": 0.00001
+        },
+        "vat_definition_export_id": {
+          "$ref": "#/definitions/vat_definition_export_id"
+        }
+      },
+      "required": ["vat_definition_export_id", "incl_vat", "excl_vat", "vat"]
+    },
+    "vat_amount_gross_and_net_receipt": {
+      "type": "object",
+      "properties": {
+        "incl_vat": {
+          "type": "number",
+          "minimum": -9999999999.99,
+          "maximum": 9999999999.99,
+          "multipleOf": 0.00001
+        },
+        "excl_vat": {
+          "type": "number",
+          "minimum": -9999999999.99,
+          "maximum": 9999999999.99,
+          "multipleOf": 0.00001
+        },
+        "vat": {
+          "type": "number",
+          "minimum": -9999999999.99,
+          "maximum": 9999999999.99,
+          "multipleOf": 0.00001
+        },
+        "vat_definition_export_id": {
+          "$ref": "#/definitions/vat_definition_export_id"
+        }
+      },
+      "required": ["vat_definition_export_id", "incl_vat", "excl_vat", "vat"]
+    },
+    "vat_amounts_gross_and_net": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/vat_amount_gross_and_net"
+      }
+    },
+    "vat_amounts_gross_and_net_receipt": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/vat_amount_gross_and_net_receipt"
+      }
+    },
+    "amount": {
+      "type": "number",
+      "minimum": -9999999999.99,
+      "maximum": 9999999999.99,
+      "multipleOf": 0.00001
+    },
+    "quantity": {
+      "type": "number",
+      "minimum": -9999999999.999,
+      "maximum": 9999999999.999,
+      "multipleOf": 0.001
+    },
+    "percentage": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "multipleOf": 0.00001
+    },
+    "currency": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 3,
+      "pattern": "^[A-Z]{3}$",
+      "description": "Each cash statement has only one base currency. The base currency specification refers to the base currency of the cash register. The base currency is represented according to ISO 4217 (column: ISO code) Ex: Euro = EUR; All payments in foreign currency on the single document are converted to the base currency in the cash statement."
+    },
+    "transaction_type": {
+      "type": "string",
+      "enum": [
+        "Beleg",
+        "AVTransfer",
+        "AVBestellung",
+        "AVTraining",
+        "AVBelegstorno",
+        "AVBelegabbruch",
+        "AVSachbezug",
+        "AVSonstige",
+        "AVRechnung"
+      ],
+      "description": "Der Transaktionstyp ordnet und unterteilt alle Vorgänge in Geschäftsvorfälle (Beleg) und andere Vorgänge. Durch diese Zuordnung wird auch die Weiterverarbeitung im Kassenabschluss gesteuert. Ausschließlich Einzelbewegungenen mit dem Transaktionstyp Beleg besitzen Relevanz für den Kassenabschluss. Im Beleg werden z. Bsp.: Rechnungen, Lieferscheine, Korrekturen etc. dargestellt. Werden Einzelbewegungen aus anderen Grundaufzeichnungssystemen des Unternehmens heraus weiterverarbeitet, so dürfen diese Einzelbewegungen nicht den Transaktionstypen Beleg erhalten"
+    },
+    "payment_type": {
+      "type": "string",
+      "enum": [
+        "Bar",
+        "Unbar",
+        "ECKarte",
+        "Kreditkarte",
+        "ElZahlungsdienstleister",
+        "GuthabenKarte",
+        "Keine"
+      ]
+    },
+    "business_case_type": {
+      "type": "string",
+      "enum": [
+        "Anfangsbestand",
+        "Umsatz",
+        "Pfand",
+        "PfandRueckzahlung",
+        "MehrzweckgutscheinKauf",
+        "MehrzweckgutscheinEinloesung",
+        "EinzweckgutscheinKauf",
+        "EinzweckgutscheinEinloesung",
+        "Forderungsentstehung",
+        "Forderungsaufloesung",
+        "Anzahlungseinstellung",
+        "Anzahlungsaufloesung",
+        "Privateinlage",
+        "Privatentnahme",
+        "Geldtransit",
+        "DifferenzSollIst",
+        "TrinkgeldAG",
+        "TrinkgeldAN",
+        "Auszahlung",
+        "Einzahlung",
+        "Rabatt",
+        "Aufschlag",
+        "Lohnzahlung",
+        "ZuschussEcht",
+        "ZuschussUnecht"
+      ]
+    },
+    "business_case": {
+      "description": "Der business_case qualifiziert den Geschäftsvorfall in der Einzelbewegung und im Kassenabschluss fachlich und inhaltlich",
+      "type": "object",
+      "properties": {
+        "type": {
+          "description": "Der Type kennzeichnet Geschäftsvorfälle mit unterschiedlichen Ausprägungen.",
+          "$ref": "#/definitions/business_case_type"
+        },
+        "name": {
+          "description": "Der name untergliedert den business_case fachlich und inhaltlich tiefer. Einem business_case können kein, ein oder mehrere names zugeordnet werden.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "purchaser_agency_id": {
+          "$ref": "#/definitions/purchaser_agency_id"
+        },
+        "amounts_per_vat_id": {
+          "description": "Einem Geschäftsvorfall können ein oder mehrere Beträge getrennt nach Umsatzsteuersätzen zugewiesen werden.",
+          "$ref": "#/definitions/vat_amounts_gross_and_net"
+        }
+      },
+      "required": ["type", "amounts_per_vat_id"]
+    },
+    "business_case_line": {
+      "description": "Der business_case einer Line kann nur entweder in Brutto oder Nettodarstellung erfolgen",
+      "properties": {
+        "type": {
+          "description": "Der Type kennzeichnet Geschäftsvorfälle mit unterschiedlichen Ausprägungen.",
+          "$ref": "#/definitions/business_case_type"
+        },
+        "name": {
+          "description": "Der name untergliedert den business_case fachlich und inhaltlich tiefer. Einem business_case können kein, ein oder mehrere names zugeordnet werden.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "purchaser_agency_id": {
+          "$ref": "#/definitions/purchaser_agency_id"
+        },
+        "amounts_per_vat_id": {
+          "$ref": "#/definitions/vat_amounts_gross_and_net"
+        }
+      },
+      "required": ["type", "amounts_per_vat_id"]
+    },
+    "reference": {
+      "description": "'Reference' beschreibt eine Referenz auf Taxonomie-Transaktion oder einen Lieferschein bzw. eine Rechnung aus einem Dritt-System",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["ExterneRechnung", "ExternerLieferschein"]
+            },
+            "date": {
+              "$ref": "#/definitions/unix_timestamp"
+            },
+            "external_export_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            }
+          },
+          "required": ["type", "external_export_id"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["ExterneSonstige"]
+            },
+            "name": {
+              "type": "string",
+              "description": "Name zur näheren Spezifikation der externen Referenz",
+              "minLength": 1,
+              "maxLength": 40
+            },
+            "date": {
+              "$ref": "#/definitions/unix_timestamp"
+            },
+            "external_other_export_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            }
+          },
+          "required": ["type", "external_other_export_id", "name"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["Transaktion"]
+            },
+            "date": {
+              "$ref": "#/definitions/unix_timestamp"
+            },
+            "cash_point_closing_export_id": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "cash_register_export_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            "transaction_export_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            }
+          },
+          "required": [
+            "type",
+            "cash_point_closing_export_id",
+            "cash_register_export_id",
+            "transaction_export_id"
+          ]
+        },
+        {
+          "type": "object",
+          "description": "Verknüpfung mit einer Transaktion, die ebenfalls innerhalb der fiskaly DSFinV-K API liegt",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["InterneTransaktion"]
+            },
+            "tx_id": {
+              "type": "string",
+              "description": "UUID der Transaktion, die verknüpft werden soll",
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000"
+            }
+          },
+          "required": ["type", "tx_id"]
+        }
+      ]
+    },
+    "client_id": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "Die UUID des Clients in der KassenSichV API"
+    },
+    "client_or_slave_id": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "Die UUID des Clients in der KassenSichV API oder eine selbst erzeugte UUID eines Slaves"
+    },
+    "tss_id": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "Die UUID der TSE in der KassenSichV API"
+    },
+    "purchaser_agency_id": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "Die UUID der einkaufenden Agentur"
+    },
+    "vat_definition_id": {
+      "type": "string",
+      "format": "uuid",
+      "example": "00000000-0000-0000-0000-000000000000",
+      "description": "UUID des Umsatzsteuersatzes"
+    },
+    "vat_definition_export_id": {
+      "type": "integer",
+      "description": "Hier werden feste umsatzsteuerliche Referenzierungen vergeben. Die Steuersätze 1-7 sind fest vorgegeben, 8-999 sind reserviert und 1000-9999999999 stehen zur freien Verfügung",
+      "minimum": 1,
+      "maximum": 9999999999
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Sie können diesen Parameter verwenden, um benutzerdefinierte Schlüssel-Wert-Daten an ein Objekt anzuhängen. Metadaten sind nützlich, um zusätzliche, strukturierte Informationen über ein Objekt zu speichern. *Hinweis:* Sie können bis zu 20 Schlüssel angeben, wobei die Schlüsselnamen bis zu 40 Zeichen und die Werte bis zu 500 Zeichen lang sein können.",
+      "example": {
+        "my_property_1": "1234",
+        "my_property_2": "https://my-internal-system/path/to/resource/1234"
+      },
+      "maxProperties": 20,
+      "propertyNames": {
+        "type": "string",
+        "maxLength": 40
+      },
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 500
+      }
+    },
+    "unix_timestamp": {
+      "type": "integer",
+      "min": 0,
+      "max": 2147483647,
+      "description": "Ein Zeitstempel / Zeitpunkt, gemessen in Sekunden seit der [Unix-Epoche](https://en.wikipedia.org/wiki/Unix_time)",
+      "example": 1577833200
+    },
+    "datetime": {
+      "type": "string",
+      "description": "Zeitstempel nach ISO 8601 und RFC3339 z.B. 2016-09-27T17:00:01+01:00 (Lokale Zeitangabe); hierbei handelt es sich um den Zeitpunkt der Erstellung des Kassenabschlusses",
+      "format": "date-time"
+    },
+    "cash_amount_by_currency": {
+      "type": "object",
+      "properties": {
+        "currency_code": {
+          "$ref": "#/definitions/currency"
+        },
+        "amount": {
+          "description": "Der Betrag in der entsprechenden Währung",
+          "$ref": "#/definitions/amount"
+        }
+      },
+      "required": ["currency_code", "amount"]
+    },
+    "payment_type_item": {
+      "type": "object",
+      "description": "Unterteilung der gezahlten Beträge nach Zahlart und Währung.",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/payment_type"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "currency_code": {
+          "$ref": "#/definitions/currency"
+        },
+        "foreign_amount": {
+          "$ref": "#/definitions/amount"
+        },
+        "amount": {
+          "$ref": "#/definitions/amount"
+        }
+      },
+      "required": ["type", "currency_code", "amount"]
+    },
+    "subline_item": {
+      "type": "object",
+      "properties": {
+        "number": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "gtin": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "quantity": {
+          "$ref": "#/definitions/quantity"
+        },
+        "quantity_factor": {
+          "type": "number",
+          "multipleOf": 0.001,
+          "exclusiveMinimum": 0
+        },
+        "quantity_measure": {
+          "type": "string",
+          "description": "Measure bezeichnet die Maßeinheit. Ist das Feld Maßeinheit leer, so gilt automatisch die Einheit Stück",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "group_id": {
+          "type": "string",
+          "description": "Eindeutige ID der Warengruppe, z.B. die Warengruppennummer",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "group_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "amount_per_vat_id": {
+          "$ref": "#/definitions/vat_amount_gross_and_net"
+        }
+      },
+      "required": ["number", "quantity", "amount_per_vat_id"]
+    },
+    "line_item": {
+      "type": "object",
+      "properties": {
+        "business_case": {
+          "$ref": "#/definitions/business_case_line"
+        },
+        "in_house": {
+          "type": "boolean",
+          "description": "Kennzeichnet einen in_house Verkauf bzw. außerhausverkauf",
+          "default": true
+        },
+        "storno": {
+          "type": "boolean",
+          "description": "Kennzeichnet einen Stornovorgang auf Line-Ebene."
+        },
+        "references": {
+          "type": "array",
+          "description": "Referenzen auf externe Lieferscheine, Rechnungen oder Transaktionen eines Taxonomie-Kassenabschlusses",
+          "items": {
+            "$ref": "#/definitions/reference"
+          },
+          "minItems": 1
+        },
+        "voucher_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "text": {
+          "type": "string",
+          "description": "Bezeichnung der Line bzw. Name des Items.",
+          "minLength": 0,
+          "maxLength": 255
+        },
+        "item": {
+          "type": "object",
+          "description": "Innerhalb des Geschäftsvorfalles bildet der item die Klammer um alle Artikelspezifischen Informationen.",
+          "properties": {
+            "number": {
+              "type": "string",
+              "description": "Bezeichnet eine eindeutige Nummer, mit der der Artikel, das Produkt bzw. die Warengruppe in den Systemen des Unternehmens gepflegt und verwaltet wird.",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            "gtin": {
+              "type": "string",
+              "description": "Die Global Trade Item Number (GTIN) ist eine internationale, unverwechselbare Nummer zur Kennzeichnung von Produkten. Sie wird weltweit von der GS1 verwaltet und vergeben. Die früher übliche Bezeichnung European Article Number (EAN) wurde 2009 von der GTIN abgelöst. ",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            "quantity": {
+              "$ref": "#/definitions/quantity"
+            },
+            "quantity_factor": {
+              "type": "number",
+              "multipleOf": 0.001,
+              "exclusiveMinimum": 0
+            },
+            "quantity_measure": {
+              "type": "string",
+              "description": "Measure bezeichnet die Maßeinheit. Ist das Feld Maßeinheit leer, so gilt automatisch die Einheit Stück",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            "group_id": {
+              "type": "string",
+              "description": "Eindeutige ID der Warengruppe, z.B. die Warengruppennummer",
+              "minLength": 1,
+              "maxLength": 40
+            },
+            "group_name": {
+              "type": "string",
+              "description": "Bezeichnet den Namen der Warengruppe",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            "price_per_unit": {
+              "description": "PricePerUnit ist der Artikelgrundpreis für Menge quantity_factor der mit quantity_measure spezifizierten Maßeinheit.",
+              "type": "number",
+              "minimum": -9999999999.99999,
+              "maximum": 9999999999.99999,
+              "multipleOf": 0.00001
+            },
+            "base_amounts_per_vat_id": {
+              "description": "Der Artikelumsatz pro Steuersatz ohne Berücksichtigung von Rabatt und Aufschlag",
+              "$ref": "#/definitions/vat_amounts_gross_and_net"
+            },
+            "discounts_per_vat_id": {
+              "description": "Der Artikelrabatt pro Steuersatz",
+              "$ref": "#/definitions/vat_amounts_gross_and_net"
+            },
+            "extra_amounts_per_vat_id": {
+              "description": "Der Artikelaufschlag pro Steuersatz",
+              "$ref": "#/definitions/vat_amounts_gross_and_net"
+            },
+            "sub_items": {
+              "type": "array",
+              "description": "Die SubItems schaffen die Möglichkeit, die Zusammensetzung von verkauften Produkten bzw. Warengruppenbezeichnungen auf Artikelebene zu erklären. Beispiel: MenüI = Cola und Hamburger. Die SubItems müssen nicht gefüllt werden. Sie haben erklärenden Charakter und keine Aussagekraft bezüglich Preis und Umsatzsteuer.",
+              "items": {
+                "$ref": "#/definitions/subline_item"
+              },
+              "minItems": 1
+            }
+          },
+          "required": ["number", "quantity", "price_per_unit"]
+        },
+        "lineitem_export_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        }
+      },
+      "required": [
+        "business_case",
+        "lineitem_export_id",
+        "storno",
+        "text",
+        "item"
+      ]
+    },
+    "transaction": {
+      "type": "object",
+      "description": "Bildet die Klammer um eine einzige Einzelbewegung. Ist also der Einzelbeleg bzw. der Einzelbon. Auch die Transaktion gliedert sich in Kopf- und Bewegungsdaten.",
+      "properties": {
+        "head": {
+          "type": "object",
+          "description": "Der Transaktionskopf beinhaltet alle Stammdaten zur Einzelbewegung.",
+          "properties": {
+            "type": {
+              "$ref": "#/definitions/transaction_type"
+            },
+            "name": {
+              "type": "string",
+              "description": "Optionaler Name der Transaktion (zwingend erforderlich für Transaktionstyp AVSonstige!)",
+              "minLength": 1,
+              "maxLength": 60
+            },
+            "storno": {
+              "type": "boolean",
+              "description": "Kennzeichnet einen globalen Stornovorgang auf Belegebene."
+            },
+            "number": {
+              "type": "integer",
+              "description": "Die Bonnummer ist im Kassenabschluss fortlaufend zu führen. Sie kann sich jedoch im Lebenszyklus einer Kasse wiederholen. ",
+              "minimum": 0
+            },
+            "timestamp_start": {
+              "$ref": "#/definitions/unix_timestamp",
+              "description": "Der Start-Zeitstempel bezeichnet den Zeitpunkt der ersten Erfassung in einer Einzelbewegung(Transaction). Kassen, die diesen Zeitstempel vergeben, müssen dies auch in der Taxonomie dokumentieren. Kassen, die dies nicht leisten können, füllen dieses Feld mit dem Wert aus timestamp_end."
+            },
+            "timestamp_end": {
+              "$ref": "#/definitions/unix_timestamp",
+              "description": "Der Ende-Zeitstempel bezeichnet den Zeitpunkt des Abschlusses einer Einzelbewegung (Transaction). Er ist der Zeitstempel, der die Ausstellung der Einzelbewegung dokumentiert. Nach §14(4) UStG ist das Ausstellungsdatum eine Pflichtangabe auf der Rechnung. Aus diesem Grund muss der Ende-Zeitstempel für jede Einzelbewegung vorhanden sein."
+            },
+            "user": {
+              "type": "object",
+              "description": "Der Benutzer ist die Person, die offiziell für die Abrechnung der Einzelbewegung an der Kasse verantwortlich ist. (Bsp.: Bedienung erfasst bzw. boniert, User kassiert)",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Der Benutzer ist mit seinem Namen im Kassensystem hinterlegt.",
+                  "minLength": 1,
+                  "maxLength": 50
+                },
+                "user_export_id": {
+                  "type": "string",
+                  "description": "Der Benutzer hat eine unternehmensinterne Kennung.",
+                  "minLength": 1,
+                  "maxLength": 50
+                }
+              },
+              "required": ["user_export_id"]
+            },
+            "buyer": {
+              "type": "object",
+              "description": "Bildet die Klammer um alle Daten zu einem Käufer. Hintergrund: Ab einem Rechnungsbetrag von 200,00€ ist die sogenannte Kleinbetragsgrenze einer Rechnung überschritten. Dann muss die Käuferadresse erfasst werden. Dazu dienen die Felder unter der Klammer [buyer]. Auch hier gibt es einen Namen und die entsprechende Adresse.",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Die Name des Käufers.",
+                  "minLength": 1,
+                  "maxLength": 50
+                },
+                "type": {
+                  "enum": ["Kunde", "Mitarbeiter"],
+                  "type": "string"
+                },
+                "address": {
+                  "$ref": "#/definitions/address_optional"
+                },
+                "vat_id_number": {
+                  "$ref": "#/definitions/vat_id_number",
+                  "description": "Laut §14a UStG ist ggf. auch die Umsatzsteuer-Identifikationsnummer des Leistungsempfängers anzugeben."
+                },
+                "buyer_export_id": {
+                  "type": "string",
+                  "description": "Die Kundennummer des Käufers.",
+                  "minLength": 1,
+                  "maxLength": 50
+                }
+              },
+              "required": ["name", "buyer_export_id", "type"]
+            },
+            "references": {
+              "type": "array",
+              "description": "Referenzen auf externe Lieferscheine, Rechnungen oder Transaktionen eines Taxonomie-Kassenabschlusses",
+              "items": {
+                "$ref": "#/definitions/reference"
+              },
+              "minItems": 1
+            },
+            "allocation_groups": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "description": "Der Abrechnungskreis ist eine variable Einheit, mit der eine Einzelbewegung einem bestimmten Kriterium (Tisch, Abteilung etc.) zugeordnet werden kann.",
+                "minLength": 1,
+                "maxLength": 50
+              }
+            },
+            "tx_id": {
+              "type": "string",
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "description": "UUID einer Transaktion. Diese ID sollte mit der TX-ID in der TSE-API übereinstimmen. Wenn es keinen entsprechenden Eintrag in der TSE-API gibt, ist sie benutzerdefinierbar"
+            },
+            "transaction_export_id": {
+              "type": "string",
+              "description": "Id der Transaktion, die vom Kassensystem automatisiert und unabänderlich zugewiesen wird. Die Id muss innerhalb eines Kassenabschlusses eindeutig sein.",
+              "minLength": 1,
+              "maxLength": 40
+            },
+            "closing_client_id": {
+              "type": "string",
+              "format": "uuid",
+              "example": "00000000-0000-0000-0000-000000000000",
+              "description": "Die Client-ID der Master-Kasse oder Slave-Kasse (Terminal), an der die Transaktion durchgeführt wurde"
+            }
+          },
+          "required": [
+            "tx_id",
+            "transaction_export_id",
+            "closing_client_id",
+            "type",
+            "storno",
+            "number",
+            "timestamp_start",
+            "timestamp_end",
+            "user",
+            "buyer"
+          ]
+        },
+        "data": {
+          "type": "object",
+          "description": "Bildet die Klammer um alle Bewegungsdaten eines Einzelbons. TransactionData unterscheiden die Daten in Gesamtbetrag mit Aufteilung in Zahlarten und umsatzsteuerliche Sachverhalte, Zusatznotizen, BonPositionen mit Artikel oder Warengruppenbezug und Bon Positionen ohne Artikel oder Warengruppenbezug.",
+          "properties": {
+            "full_amount_incl_vat": {
+              "$ref": "#/definitions/amount"
+            },
+            "payment_types": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/payment_type_item"
+              }
+            },
+            "amounts_per_vat_id": {
+              "description": "Aufteilung des Gesamtbetrages einer Transaktion in die Einzelbeträge nach ausgewiesenen Umsatzsteuersätzen.",
+              "$ref": "#/definitions/vat_amounts_gross_and_net_receipt"
+            },
+            "notes": {
+              "type": "string",
+              "description": "Unter [notes] werden entsprechende Zusatznotizen erfasst.",
+              "minLength": 1,
+              "maxLength": 255
+            },
+            "lines": {
+              "type": "array",
+              "description": "Jeder Bon der ein Geschäft an der Kasse definiert, wird als Transaktion bezeichnet. Eine Transaktion kann aus einer oder mehreren Geschäftsvorfällen bestehen. Diese Geschäftsvorfälle werden im Folgenden [lines] genannt. Die Taxonomie unterscheidet zwischen ItemLine und TypeLine. Die ItemLine steht für Geschäftsvorfälle, die einen Bezug zu einem Artikel, Produkt oder einer Warengruppe besitzen.",
+              "items": {
+                "$ref": "#/definitions/line_item"
+              }
+            }
+          },
+          "required": [
+            "full_amount_incl_vat",
+            "payment_types",
+            "amounts_per_vat_id",
+            "lines"
+          ]
+        },
+        "security": {
+          "description": "Um die Sicherheitsanforderungen zu erfüllen, ist es notwendig, den Link einer TSE-Transaktion zu übergeben oder, wenn keine entsprechende\n TSE-Transaktion vorhanden ist, eine Fehlermeldung.",
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "tss_tx_id": {
+                  "type": "string",
+                  "description": "Identifiziert eine Transaktion in der Sign-API durch eine `tx_uuid` (z.B. eine selbst erzeugte UUIDv4)"
+                }
+              },
+              "required": ["tss_tx_id"]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "error_message": {
+                  "description": "Bei TSE-Ausfall oder Fehler sollte hier eine aussagekräftige Fehlerbeschreibung eingetragen werden.",
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                }
+              },
+              "required": ["error_message"]
+            }
+          ]
+        }
+      },
+      "required": ["head", "data", "security"]
+    },
+    "cash_statement": {
+      "type": "object",
+      "description": "Alle Bewegungen einer Kasse werden im CashStatement dargestellt. Das Cashstatement einer Kasse stellt in einem Block die Geschäftsvorfälle und in einem zweiten Block die Zahlungsströme dar.",
+      "properties": {
+        "business_cases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/business_case"
+          }
+        },
+        "payment": {
+          "type": "object",
+          "description": "Die Zahlart bildet den zweiten Block des CashStatement und untergliedert den gesamten Zahlungsstrom an einer Kasse in verschiedene Zahlarten.",
+          "properties": {
+            "full_amount": {
+              "$ref": "#/definitions/amount",
+              "description": "Der Gesamtbetrag stellt den Gesamtbetrag des Zahlungsstromes dar."
+            },
+            "cash_amount": {
+              "$ref": "#/definitions/amount",
+              "description": "Der Gesamtbetrag aller Bareinnahmen und -ausgaben. Entnimmt der Unternehmer das Geld im Rahmen des Kassenabschlusses, so weist dieses Feld die 0 aus. Entnimmt der Unternehmer im Rahmen des Kassenabschlusses nicht das gesamte Geld, so weist dieses Feld den Kassenendbestand an Bargeld aus."
+            },
+            "cash_amounts_by_currency": {
+              "description": "Eine Aufschlüsselung aller Bareinnahmen nach Währung",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/cash_amount_by_currency"
+              }
+            },
+            "payment_types": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/payment_type_item"
+              }
+            }
+          },
+          "required": [
+            "full_amount",
+            "cash_amount",
+            "cash_amounts_by_currency",
+            "payment_types"
+          ]
+        }
+      },
+      "required": ["business_cases", "payment"]
+    },
+    "cash_register": {
+      "type": "object",
+      "description": "Die Klammer um alle Angaben zur jeweiligen Kasse.",
+      "properties": {
+        "brand": {
+          "type": "string",
+          "description": "Bezeichnet die Marke des Kassenherstellers.",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "model": {
+          "type": "string",
+          "description": "Bezeichnet das Modell der jeweiligen Kasse.",
+          "minLength": 1,
+          "maxLength": 50
+        },
+        "software": {
+          "type": "object",
+          "properties": {
+            "brand": {
+              "type": "string",
+              "description": "Hier wird der Name der jeweiligen Kassensoftware aufgeführt.",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            "version": {
+              "type": "string",
+              "description": "Hier erfolgt die Versionsangabe der jeweiligen Software.",
+              "minLength": 1,
+              "maxLength": 50
+            }
+          },
+          "anyOf": [
+            {
+              "required": ["brand"]
+            },
+            {
+              "required": ["version"]
+            }
+          ]
+        },
+        "base_currency_code": {
+          "$ref": "#/definitions/currency"
+        },
+        "processing_flags": {
+          "type": "object",
+          "description": "Die Aktivierung dieses Feldes kennzeichnet, dass diese Kasse eine umsatzsteuerliche Zuordnung zum Zeitpunkt der Forderungsauflösung nicht treffen kann. Soll diese Einstellung geändert werden, so ist zuerst zwingend ein Kassenabschluss zu erstellen. Die umsatzsteuerliche Zuordnung erfolgt somit in jedem Falle zum Zeitpunkt der Lieferung und der Leistung.",
+          "properties": {
+            "UmsatzsteuerNichtErmittelbar": {
+              "type": "boolean"
+            }
+          }
+        },
+        "client_id": {
+          "$ref": "#/definitions/client_or_slave_id"
+        },
+        "master_client_id": {
+          "$ref": "#/definitions/client_id"
+        },
+        "tss_id": {
+          "$ref": "#/definitions/tss_id"
+        },
+        "metadata": {
+          "$ref": "#/definitions/metadata"
+        }
+      },
+      "required": [
+        "client_id",
+        "tss_id",
+        "brand",
+        "model",
+        "base_currency_code",
+        "software"
+      ]
+    },
+    "vat_definition": {
+      "type": "object",
+      "properties": {
+        "percentage": {
+          "$ref": "#/definitions/percentage"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 55
+        },
+        "metadata": {
+          "$ref": "#/definitions/metadata"
+        }
+      },
+      "anyOf": [
+        {
+          "properties": {
+            "id": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 7
+            }
+          }
+        },
+        {
+          "properties": {
+            "id": {
+              "type": "integer",
+              "minimum": 1000,
+              "maximum": 9999999999
+            }
+          },
+          "required": ["description"]
+        }
+      ],
+      "required": ["id", "percentage"]
+    },
+    "purchaser_agency": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/name"
+        },
+        "address": {
+          "$ref": "#/definitions/address_strict"
+        },
+        "tax_number": {
+          "$ref": "#/definitions/tax_number"
+        },
+        "vat_id_number": {
+          "$ref": "#/definitions/vat_id_number"
+        },
+        "purchaser_agency_id": {
+          "$ref": "#/definitions/purchaser_agency_id"
+        },
+        "purchaser_agency_export_id": {
+          "type": "integer",
+          "description": "Die Referenzierung aller Daten eines Agenturgebers für Agenturumsätze auf eine ID wird an dieser Position durchgeführt. Für die ID werden die Zahlen 1 - 999999999999 akzeptiert. Es werden nur ganze Zahlen akzeptiert. Die Reihenfolge muss in 1-er Schritten aufsteigend sein.",
+          "minimum": 0
+        },
+        "client_id": {
+          "$ref": "#/definitions/client_id"
+        },
+        "metadata": {
+          "$ref": "#/definitions/metadata"
+        }
+      },
+      "required": [
+        "purchaser_agency_id",
+        "purchaser_agency_export_id",
+        "client_id",
+        "name",
+        "address",
+        "tax_number"
+      ]
+    }
+  },
+  "type": "object",
+  "required": ["cash_point_closing"],
+  "properties": {
+    "cash_point_closing": {
+      "type": "object",
+      "description": "Der Kassenabschluss wird ein-, mehrmals oder kalendertagübergreifend für eine Kasse erstellt.",
+      "properties": {
+        "head": {
+          "type": "object",
+          "description": "In dieser Klammer werden die zentralen Stammdaten des Kassenabschlusses dargestellt.",
+          "properties": {
+            "business_date": {
+              "type": "string",
+              "format": "date",
+              "description": "Das optionale Buchungsdatum des Kassenabschluss, z.B. zur Buchung in der Finanzbuchhaltung. Der Buchungstag muss angegeben werden, wenn dieser vom Erstellungstag abweicht. Die Angabe erfolgt nach nach ISO 8601 und RFC3339 im Format 'JJJJ-MM-TT'"
+            },
+            "first_transaction_export_id": {
+              "type": ["string", "null"],
+              "description": "Die Id der ersten Transaktion die in einen Kassenabschluss fließt.",
+              "maxLength": 40
+            },
+            "last_transaction_export_id": {
+              "type": ["string", "null"],
+              "description": "Die Id der letzten Transaktion die in einen Kassenabschluss fließt.",
+              "maxLength": 40
+            },
+            "export_creation_date": {
+              "description": "Das Erstellungsdatum des Kassenabschlusses.",
+              "$ref": "#/definitions/unix_timestamp"
+            }
+          },
+          "required": [
+            "export_creation_date",
+            "first_transaction_export_id",
+            "last_transaction_export_id"
+          ]
+        },
+        "cash_statement": {
+          "$ref": "#/definitions/cash_statement"
+        },
+        "transactions": {
+          "type": "array",
+          "description": "Bildet die Klammer um alle Einzelbewegungen eines Kassenabschlusses",
+          "items": {
+            "$ref": "#/definitions/transaction"
+          }
+        },
+        "client_id": {
+          "$ref": "#/definitions/client_id"
+        },
+        "cash_point_closing_export_id": {
+          "type": "integer",
+          "description": "Jede Kasse vergibt die Kassenabschlussnummer. Diese ist aufsteigend, fortlaufend, nicht zurücksetzbar. Sie darf sich innerhalb einer Kasse nicht wiederholen. Durch die Hinzunahme der cash_register/id wird der Kassenabschluss eindeutig",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "client_id",
+        "cash_point_closing_export_id",
+        "head",
+        "cash_statement",
+        "transactions"
+      ]
+    }
+  }
+}

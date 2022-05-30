@@ -1,0 +1,356 @@
+Project project_name {
+  database_type: 'PostgreSQL'
+  Note: 'Description of the project'
+}
+
+//// -- LEVEL 1
+//// -- Tables and References
+
+enum environment {
+  TEST
+  LIVE
+}
+
+enum tx_type {
+  Beleg 
+  AVTransfer
+  AVBestellung
+  AVTraining
+  AVBelegstorno
+  AVBelegabbruch
+  AVSachbezug
+  AVSonstige
+  AVRechnung
+}
+
+enum type_cpc_t {
+  cash_point_closing
+  transaction
+}
+
+enum type_t_li {
+  transaction
+  lineitem
+}
+
+enum payment_type {
+  Bar
+  Unbar
+  ECKarte
+  Kreditkarte
+  ElZahlungsdienstleister
+  GuthabenKarte
+  Keine
+}
+
+enum business_case_type {
+  Anfangsbestand
+  Umsatz
+  Pfand
+  PfandRueckzahlung
+  MehrzweckgutscheinKauf
+  MehrzweckgutscheinEinloesung
+  EinzweckgutscheinKauf
+  EinzweckgutscheinEinloesung
+  Forderungsentstehung
+  Forderungsaufloesung
+  Anzahlungseinstellung
+  Anzahlungsaufloesung
+  Privateinlage
+  Privatentnahme
+  Geldtransit
+  DifferenzSollIst
+  TrinkgeldAG
+  TrinkgeldAN
+  Auszahlung
+  Einzahlung
+  Rabatt
+  Aufschlag
+  Lohnzahlung
+  ZuschussEcht
+  ZuschussUnecht
+}
+
+enum amount_type {
+  transaction
+  business_case
+  lineitem_base_amounts
+  lineitem_discounts
+  lineitem_extra_amounts
+}
+
+enum external_references_type {
+  ExterneRechnung
+  ExternerLieferschein
+  ExterneSonstige
+}
+
+
+// Creating tables
+Table requests as R {
+  request_id uuid [pk]
+  path varchar(100) [not null]
+  body json [not null]
+  time_creation timestamp [not null]
+  organization_id uuid [not null]
+  env environment [not null]
+  version integer [not null]
+}
+
+Table vat_definitions as VD {
+  vat_definition_id uuid [pk]
+  revision smallint [pk]
+  vat_definition_export_id smallint [not null]
+  organization_id uuid [not null]
+  percentage numeric(5,2) [not null]
+  description varchar(55)
+  env environment [not null]
+  version integer [not null]
+  metadata json
+  time_creation timestamp [not null]
+  time_update timestamp [not null]
+  indexes {
+    (vat_definition_export_id, organization_id, revision) [unique]
+  }
+} 
+
+Table cash_registers as CR {
+  client_id uuid [pk]
+  revision smallint [pk]
+  tss_id uuid [not null]
+  organization_id uuid [not null]
+  base_currency_code char(3) [not null]
+  brand varchar(50)
+  model varchar(50)
+  sw_version varchar(50)
+  sw_brand varchar(50)
+  vat_not_determineable boolean
+  master_client_id uuid
+  version integer [not null]
+  env environment [not null]
+  metadata json
+  time_creation timestamp [not null]
+  time_update timestamp [not null]
+  indexes {
+    (client_id, organization_id, revision) [unique]
+  }
+}
+
+Table purchaser_agencies as PA {
+  purchaser_agency_id uuid [pk]
+  revision smallint [pk]
+  purchaser_agency_export_id integer [not null]
+  organization_id uuid [not null]
+  name varchar(60) [not null]
+  tax_number varchar(20) [not null]
+  client_id uuid [not null]
+  address json [not null]
+  vat_id_number varchar(15)
+  env environment [not null]
+  version integer [not null]
+  metadata json
+  time_creation timestamp [not null]
+  time_update timestamp [not null]
+  indexes {
+    (purchaser_agency_export_id, organization_id, revision) [unique]
+  }
+}
+
+Table cash_point_closings as CPC {
+  cash_point_closing_id uuid [pk]
+  client_id uuid [not null]
+  client_revision smallint [not null]
+  payment_full_amount numeric(12,2) [not null]
+  payment_cash_amount numeric(12,2) [not null]
+  env environment [not null]
+  version integer [not null]
+  metadata json
+  time_creation timestamp [not null]
+  time_update timestamp [not null]
+}
+
+Table transactions as T {
+  transaction_id uuid [pk]
+  cash_point_closing_id uuid [not null]
+  tse_tx_id uuid
+  type tx_type [not null]
+  storno boolean [not null]
+  transaction_export_id varchar(40) [not null, note: 'id in cash register']
+  bon_number integer [not null]
+  timestamp_start "timestamp with time zone" [not null]
+  timestamp_end "timestamp with time zone" [not null]
+  name varchar(60)
+  user_id varchar(50) [not null]
+  user_name varchar(50)
+  buyer json [not null]
+  allocation_groups json
+  full_amount_incl_vat numeric(12,2) [not null]
+  notes varchar(255)
+  indexes {
+    (cash_point_closing_id, transaction_export_id) [unique]
+  }
+}
+
+Table transaction_internal_references {
+  transaction_id uuid [pk]
+  referenced_transaction_id uuid [pk]
+}
+
+Table business_cases as BC {
+  business_case_id uuid [pk]
+  cash_point_closing_id uuid
+  type business_case_type [not null]
+  name varchar(40)
+  purchaser_agency_id uuid
+  purchaser_agency_revision smallint
+}
+
+Table cash_amounts_by_currency {
+  currency_code char(3) [not null]
+  amount numeric(15,5) [not null]
+  cash_point_closing_id uuid [not null]
+}
+
+Table payment_types as PT {
+  payment_type_id uuid [pk]
+  transaction_id uuid
+  cash_point_closing_id uuid
+  entry_type type_cpc_t [not null]
+  type payment_type [not null]
+  currency_code char(3) [not null]
+  amount numeric(15,5) [not null]
+  name varchar(60)
+  foreign_amount numeric(15,5)
+}
+
+Table lineitems as L {
+  lineitem_id uuid [pk]
+  lineitem_export_id varchar(50) [not null]
+  transaction_id uuid [not null]
+  business_case_type business_case_type [not null]
+  business_case_name varchar(40)
+  // business_case_id uuid [not null]
+  purchaser_agency_id uuid
+  purchaser_agency_revision smallint
+  storno boolean [not null]
+  text varchar(255) [not null]
+  in_house boolean [default: true]
+  voucher_id varchar(50)
+  item_number varchar(50) [not null]
+  quantity numeric(13,3) [not null]
+  price_per_unit numeric(15,5) [not null]
+  gtin varchar(50)
+  quantity_factor numeric(5,3)
+  quantity_measure varchar(50)
+  group_id varchar(40)
+  group_name varchar(50)
+  reference_transaction_id uuid
+}
+
+Table amounts_per_vat_ids {
+  amounts_per_vat_id uuid [pk]
+  lineitem_id uuid
+  transaction_id uuid
+  business_case_id uuid
+  entry_type amount_type [not null]
+  vat_definition_id uuid [not null]
+  vat_definition_revision smallint [not null]
+  excl_vat numeric(15,5) [not null]
+  vat numeric(15,5) [not null]
+}
+
+Table external_references {
+  external_reference_id uuid [pk]
+  transaction_id uuid [not null]
+  lineitem_id uuid
+  entry_type type_t_li [not null]
+  type external_references_type [not null]
+  external_reference_export_id varchar(40) [not null]
+  name varchar(40)
+  date timestamp
+}
+
+Table transaction_references {
+  transaction_reference_id uuid [pk]
+  transaction_id uuid [not null]
+  lineitem_id uuid
+  entry_type type_t_li [not null]
+  cash_point_closing_export_id integer [not null]
+  cash_register_id varchar(50) [not null]
+  transaction_reference_export_id varchar(40) [not null, note: 'cash register internal id']
+  date timestamp
+}
+
+Table subitems as SI {
+  subitem_id uuid [pk]
+  lineitem_id uuid [not null]
+  number varchar(50) [not null]
+  quantity numeric(13,3) [not null]
+  vat_definition_id uuid [not null]
+  vat_definition_revision smallint [not null]
+  amount_excl_vat numeric(15,5) [not null]
+  vat_amount numeric(15,5) [not null]
+  gtin varchar(50)
+  name varchar(60)
+  quantity_factor numeric(5,3) 
+  quantity_measure varchar(50)
+  group_id varchar(40)
+  group_name varchar(50)
+}
+
+Ref: "cash_point_closings"."cash_point_closing_id" < "transactions"."cash_point_closing_id" [delete: cascade]
+
+Ref: "transactions"."transaction_id" < "payment_types"."transaction_id" [delete: cascade]
+
+Ref: "transactions"."transaction_id" < "lineitems"."transaction_id" [delete: cascade]
+
+Ref: "vat_definitions"."vat_definition_id" > "amounts_per_vat_ids"."vat_definition_id" [delete: restrict]
+Ref: "vat_definitions"."revision" > "amounts_per_vat_ids"."vat_definition_revision" [delete: restrict]
+
+Ref: "vat_definitions"."vat_definition_id" > "subitems"."vat_definition_id" [delete: restrict]
+Ref: "vat_definitions"."revision" > "subitems"."vat_definition_revision" [delete: restrict]
+
+Ref: "cash_registers"."client_id" < "cash_point_closings"."client_id" [delete: restrict]
+Ref: "cash_registers"."revision" < "cash_point_closings"."client_revision" [delete: restrict]
+
+Ref: "lineitems"."lineitem_id" < "amounts_per_vat_ids"."lineitem_id" [delete: cascade]
+
+Ref: "transactions"."transaction_id" < "external_references"."transaction_id" [delete: cascade]
+
+Ref: "transactions"."transaction_id" < "transaction_references"."transaction_id" [delete: cascade]
+
+Ref: "lineitems"."lineitem_id" < "subitems"."lineitem_id" [delete: cascade]
+
+Ref: "lineitems"."lineitem_id" < "external_references"."lineitem_id" [delete: cascade]
+
+Ref: "lineitems"."lineitem_id" < "transaction_references"."lineitem_id" [delete: cascade]
+
+Ref: "cash_point_closings"."cash_point_closing_id" < "business_cases"."cash_point_closing_id" [delete: cascade]
+
+// the problem here is that this is not unique
+// Ref: "vat_definitions"."vat_definition_id" < "business_cases_amounts"."vat_id" [delete: restrict]
+
+Ref: "cash_point_closings"."cash_point_closing_id" < "cash_amounts_by_currency"."cash_point_closing_id" [delete: cascade]
+
+Ref: "cash_point_closings"."cash_point_closing_id" < "payment_types"."cash_point_closing_id" [delete: cascade]
+
+// the problem here is that this is not unique
+// Ref: "amounts_per_vat_id"."id" > "vat_definitions"."vat_definition_id" [delete: restrict]
+
+Ref: "transactions"."transaction_id" < "amounts_per_vat_ids"."transaction_id" [delete: cascade]
+
+// Ref: "lineitems"."business_case_id" - "business_cases"."business_case_id" [delete: cascade]
+
+Ref: "purchaser_agencies"."purchaser_agency_id" < "lineitems"."purchaser_agency_id" [delete: restrict]
+Ref: "purchaser_agencies"."revision" < "lineitems"."purchaser_agency_revision" [delete: restrict]
+
+Ref: "purchaser_agencies"."purchaser_agency_id" < "business_cases"."purchaser_agency_id" [delete: restrict]
+Ref: "purchaser_agencies"."revision" < "business_cases"."purchaser_agency_revision" [delete: restrict]
+
+Ref: "business_cases"."business_case_id" < "amounts_per_vat_ids"."business_case_id"
+
+Ref: "lineitems"."reference_transaction_id" - "transactions"."transaction_id"
+
+Ref: "transactions"."transaction_id" < "transaction_internal_references"."transaction_id"
+
+Ref: "transaction_internal_references"."referenced_transaction_id" < "transactions"."transaction_id"

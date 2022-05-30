@@ -1,0 +1,77 @@
+substitutions:
+  _IMAGE: eu.gcr.io/fiskaly/fiskaly-dsfinvk-v0
+  _CACHE: eu.gcr.io/fiskaly/fiskaly-dsfinvk-v0/cache
+
+steps:
+  - id: 'pull-production-cache'
+    waitFor: ['-']
+    name: 'gcr.io/cloud-builders/docker'
+    entrypoint: '/bin/sh'
+    args: ['-c', 'docker pull ${_CACHE}:production || true']
+
+  - id: 'pull-development-cache'
+    waitFor: ['-']
+    name: 'gcr.io/cloud-builders/docker'
+    entrypoint: '/bin/sh'
+    args: ['-c', 'docker pull ${_CACHE}:development || true']
+
+  - id: 'pull-runtime-cache'
+    waitFor: ['-']
+    name: 'gcr.io/cloud-builders/docker'
+    entrypoint: '/bin/sh'
+    args: ['-c', 'docker pull ${_IMAGE}:latest || true']
+
+  - id: 'build-development'
+    waitFor: ['pull-development-cache']
+    name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--cache-from=${_CACHE}:development'
+      - '--tag=${_CACHE}:development'
+      - '--tag=development'
+      - '--target=development'
+      - '.'
+
+  - id: 'build-production'
+    waitFor: ['pull-development-cache']
+    name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--cache-from=${_CACHE}:production'
+      - '--tag=${_CACHE}:production'
+      - '--tag=production'
+      - '--target=production'
+      - '.'
+
+#  - id: 'run-tests'
+#    waitFor:
+#      - 'build-development'
+#    name: 'docker/compose:1.24.0'
+#    args: ['run', '--rm', 'dsfinvk-api', 'npm', 'run', 'test:all']
+
+  - id: 'build-runtime'
+    waitFor:
+#      - 'run-tests'
+      - 'build-development'
+      - 'build-production'
+      - 'pull-runtime-cache'
+    name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--cache-from=development'
+      - '--cache-from=production'
+      - '--cache-from=${_IMAGE}:latest'
+      - '--tag=${_IMAGE}:${COMMIT_SHA}'
+      - '--tag=${_IMAGE}:latest'
+      - '--target=runtime'
+      - '.'
+
+timeout: 1800s
+options:
+  machineType: 'N1_HIGHCPU_8'
+
+images:
+  - '${_IMAGE}:latest'
+  - '${_IMAGE}:${COMMIT_SHA}'
+  - '${_CACHE}:development'
+  - '${_CACHE}:production'

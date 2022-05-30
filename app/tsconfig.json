@@ -1,0 +1,26 @@
+{
+  "include": ["./src/**/*"],
+  "compilerOptions": {
+    "outDir": "./build",
+    "sourceMap": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "target": "es2020",
+    "module": "commonjs",
+    "typeRoots": ["node_modules/@types"],
+    "lib": ["es2020"],
+    "skipLibCheck": true
+    // "paths": {
+    //   "dep": ["./src/types"] // That location is a example but you need to point that at where your dep.d.ts file is
+    // }
+  },
+  "ts-node": {
+    "transpileOnly": true,
+    "esm": true,
+    "compilerOptions": {
+      "module": "commonjs"
+    }
+  }
+}

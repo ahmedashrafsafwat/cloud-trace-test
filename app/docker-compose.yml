@@ -1,0 +1,74 @@
+version: '3.4'
+
+services:
+  minio-service:
+    # management UI available at http://localhost:9000/minio/
+    image: minio/minio:edge
+    hostname: minio-service
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    command: minio server --console-address ":9001" /data
+    environment:
+      - MINIO_ROOT_USER=accesskey
+      - MINIO_ROOT_PASSWORD=secretkey
+  # rabbitmq-service:
+  #   # management UI available at http://localhost:15672/
+  #   image: rabbitmq:3.8.3-management-alpine
+  #   hostname: rabbitmq-service
+  #   environment:
+  #     - RABBITMQ_DEFAULT_USER=rabbit
+  #     - RABBITMQ_DEFAULT_PASS=rabbit
+  #   ports:
+  #     - '4369:4369'
+  #     - '5672:5672'
+  #     - '15672:15672'
+  #     - '25672:25672'
+  #     - '35197:35197'
+  redis-service:
+    image: redis:latest
+    hostname: redis-service
+    ports:
+      - '6379:6379'
+  postgres-service:
+    # latest build has breaking changes
+    # TODO: set the superuser password and use the latest postgres version
+    image: postgres:9.6.16-alpine
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - ./dump:/dump
+
+  dsfinvk-api:
+    build:
+      context: .
+      target: development
+    environment:
+      - HOST=0.0.0.0
+      - RABBIT_HOST=rabbitmq-service
+      - RABBIT_USER=rabbit
+      - RABBIT_PASSWORD=rabbit
+      - MINIO_HOST=minio-service
+      - MINIO_ACCESS_KEY=accesskey
+      - MINIO_SECRET_KEY=secretkey
+      - KASSENSICHV_URL=https://kassensichv.fiskaly.dev
+      - DSFINVK_EXPORT_BASE_URL=http://localhost:3000
+      - NODE_ENV=development
+      - BATCH_COUNT=20
+    env_file:
+      - ./.env
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./coverage:/app/coverage
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./package.json:/app/package.json
+    ports:
+      - '3000:3000'
+    command: npm start
+    depends_on:
+      - 'postgres-service'
+      - 'minio-service'
+      - 'redis-service'
