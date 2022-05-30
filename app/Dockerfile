@@ -21,7 +21,6 @@ COPY --from=development /usr/lib/libgcc* /usr/lib/libstdc* /usr/lib/
 COPY --from=development /usr/local /usr/local
 COPY --from=production /app/node_modules /app/node_modules
 COPY --from=build /app/build /app
-COPY public /app/public
 USER app
 EXPOSE 3000/tcp
 CMD [ "node", "." ]
