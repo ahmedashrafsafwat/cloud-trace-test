@@ -1,5 +1,5 @@
 // TODO: Better logging
-import logger from './lib/logger';
+// import logger from './lib/logger';
 import Queue from './queue/Queue';
 import { ClosingQueueMessage } from './models';
 import {
@@ -115,9 +115,9 @@ async function processCashPointClosing(content: ClosingQueueMessage) {
 
 if (require.main === module) {
   // make sure that everything gets logged via our pino logger:
-  console.log = console.info = logger.info.bind(logger);
-  console.warn = logger.warn.bind(logger);
-  console.error = logger.error.bind(logger);
+  // console.log = console.info = logger.info.bind(logger);
+  // console.warn = logger.warn.bind(logger);
+  // console.error = logger.error.bind(logger);
 
   Queue.getChannel().then(async (channel) => {
     await initMetrics();
