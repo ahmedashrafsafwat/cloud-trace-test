@@ -1,6 +1,6 @@
 // install an 'unhandledRejection' handler:
 import Fastify from 'fastify';
-import logger, { installDefaultSerializer } from './lib/logger';
+// import logger, { installDefaultSerializer } from './lib/logger';
 import app from './app';
 import ajvFormats from 'ajv-formats';
 import * as TraceAgent from '@google-cloud/trace-agent';
@@ -16,7 +16,7 @@ const tracer = TraceAgent.start({
 export { tracer };
 
 export const server = Fastify({
-  logger,
+  // logger,
   disableRequestLogging: true,
   requestIdHeader: 'x-request-id',
   requestIdLogLabel: 'request_id',
@@ -42,7 +42,7 @@ server.setSchemaCompiler(function (schema) {
 
 // fastify somehow kills our default serializer during initialization
 // that's we we have to re-add it again:
-installDefaultSerializer(server.log);
+// installDefaultSerializer(server.log);
 
 server.register(app);
 
@@ -52,9 +52,9 @@ export default server;
 // e.g. via: npx ts-node src/server.ts
 if (require.main === module) {
   // make sure that everything gets logged via our pino logger:
-  console.log = console.info = logger.info.bind(logger);
-  console.warn = logger.warn.bind(logger);
-  console.error = logger.error.bind(logger);
+  // console.log = console.info = logger.info.bind(logger);
+  // console.warn = logger.warn.bind(logger);
+  // console.error = logger.error.bind(logger);
   // run server:
   const opts = {
     port: Number(process.env.PORT) || 3000,

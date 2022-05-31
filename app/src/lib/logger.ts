@@ -2,10 +2,10 @@
 // - https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity
 // - https://cloud.google.com/error-reporting/docs/formatting-error-messages
 
-import pino from 'pino';
+// import pino from 'pino';
 
-const { symbols } = pino;
-const { serializersSym, wildcardGsym } = symbols;
+// const { symbols } = pino;
+// const { serializersSym, wildcardGsym } = symbols;
 
 export function defaultSerializer(event) {
   const { message, stack } = event;
@@ -17,7 +17,7 @@ export function defaultSerializer(event) {
 }
 
 export function installDefaultSerializer(logger) {
-  logger[serializersSym][wildcardGsym] = defaultSerializer;
+  // logger[serializersSym][wildcardGsym] = defaultSerializer;
 }
 
 function mapLevelToGcpSeverity(level) {
@@ -41,16 +41,16 @@ function mapLevelToGcpSeverity(level) {
 
 // do NOT use this instance, unless you know what you're doing
 // instead, use the logger injected into fastify, fastify's routes or apollo!
-export default pino({
-  base: null, // completely useless info
-  timestamp: false, // will be provided by docker
-  messageKey: 'message',
-  formatters: {
-    level: (level) => ({ severity: mapLevelToGcpSeverity(level) }),
-  },
-  level: process.env.LOG_LEVEL || 'info',
-  serializers: {
-    [wildcardGsym]: defaultSerializer,
-  },
-  prettyPrint: process.env.NODE_ENV !== 'production',
-});
+// export default pino({
+//   base: null, // completely useless info
+//   timestamp: false, // will be provided by docker
+//   messageKey: 'message',
+//   formatters: {
+//     level: (level) => ({ severity: mapLevelToGcpSeverity(level) }),
+//   },
+//   level: process.env.LOG_LEVEL || 'info',
+//   serializers: {
+//     [wildcardGsym]: defaultSerializer,
+//   },
+//   prettyPrint: process.env.NODE_ENV !== 'production',
+// });
