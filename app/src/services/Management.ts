@@ -36,21 +36,21 @@ export async function retrieveOrganization(
   }
 
   async function cacheOrganizationInfo(info: any) {
-    await redis.set(
-      constants.REDIS_ORGANIZATION_KEY_PREFIX + organizationId,
-      JSON.stringify(info),
-      'EX',
-      60,
-    );
+    // await redis.set(
+    //   constants.REDIS_ORGANIZATION_KEY_PREFIX + organizationId,
+    //   JSON.stringify(info),
+    //   'EX',
+    //   60,
+    // );
   }
 
   async function getCachedOrganizationInfo() {
-    const cached = await redis.get(
-      constants.REDIS_ORGANIZATION_KEY_PREFIX + organizationId,
-    );
-    if (cached) {
-      return JSON.parse(cached);
-    }
+    // const cached = await redis.get(
+    //   constants.REDIS_ORGANIZATION_KEY_PREFIX + organizationId,
+    // );
+    // if (cached) {
+    //   return JSON.parse(cached);
+    // }
 
     return false;
   }
@@ -83,11 +83,11 @@ export async function retrieveOrganization(
 
   const retrieveOrganizationTime = logTime('retrieveOrganization', request);
 
-  const cached = await getCachedOrganizationInfo();
-  if (cached) {
-    await retrieveOrganizationTime.end();
-    return cached;
-  }
+  // const cached = await getCachedOrganizationInfo();
+  // if (cached) {
+  //   await retrieveOrganizationTime.end();
+  //   return cached;
+  // }
 
   const result = await retrieveFromManagementApi();
   await cacheOrganizationInfo(result);

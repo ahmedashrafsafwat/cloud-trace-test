@@ -1,7 +1,7 @@
 import path from 'path';
 import serve from 'fastify-static';
 import cors from 'fastify-cors';
-import redis from 'fastify-redis';
+// import redis from 'fastify-redis';
 import authentication from './plugins/authentication';
 import requestId from './plugins/request-id';
 import errorHandler from './plugins/error-handler';
@@ -33,13 +33,13 @@ export default async function app(fastify) {
 
   fastify.register(requestId);
 
-  fastify.register(redis, {
-    host: config.REDIS_HOST,
-    port: config.REDIS_PORT || 6379,
-    connectTimeout: config.REDIS_CONNECTION_TIMEOUT,
-    maxRetriesPerRequest: config.REDIS_MAX_RETRIES_PER_REQUEST,
-    // closeClient: true,
-  });
+  // fastify.register(redis, {
+  //   host: config.REDIS_HOST,
+  //   port: config.REDIS_PORT || 6379,
+  //   connectTimeout: config.REDIS_CONNECTION_TIMEOUT,
+  //   maxRetriesPerRequest: config.REDIS_MAX_RETRIES_PER_REQUEST,
+  //   // closeClient: true,
+  // });
 
   fastify.register(authentication);
 

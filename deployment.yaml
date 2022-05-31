@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: my-app
-        image: gcr.io/sonorous-pact-206308/app:v1.1
+        image: gcr.io/sonorous-pact-206308/app:v1.2
         ports:
         - containerPort: 4000
         env:

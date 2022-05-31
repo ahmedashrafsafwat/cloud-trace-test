@@ -19,7 +19,7 @@ export default async function (fastify: FastifyInstance): Promise<void> {
     KEYCLOAK_REALM,
     KEYCLOAK_BASE,
   } = fastify.config;
-  const { redis } = fastify;
+  // const { redis } = fastify;
 
   const UNAUTHORIZED = {
     status_code: 401,
@@ -74,12 +74,12 @@ export default async function (fastify: FastifyInstance): Promise<void> {
           return;
         }
 
-        const subMapKey = getSubMapKey(req.body.refresh_token);
-        const key = await redis.get(subMapKey);
-        if (key) {
-          await redis.del(key);
-        }
-        await redis.del(subMapKey);
+        // const subMapKey = getSubMapKey(req.body.refresh_token);
+        // const key = await redis.get(subMapKey);
+        // if (key) {
+        //   await redis.del(key);
+        // }
+        // await redis.del(subMapKey);
       }
 
       async function getCachedResponse(req) {
@@ -94,31 +94,31 @@ export default async function (fastify: FastifyInstance): Promise<void> {
         }
 
         // Check if cached token exists
-        const response = await redis.get(key);
-        if (!response) {
-          return;
-        }
+        // const response = await redis.get(key);
+        // if (!response) {
+        //   return;
+        // }
 
-        try {
-          // Update cached response
-          const responseBody = JSON.parse(response);
-          const now = Math.round(Date.now() / 1000);
-          responseBody.access_token_expires_in =
-            responseBody.access_token_expires_at - now;
-          responseBody.refresh_token_expires_in =
-            responseBody.refresh_token_expires_at - now;
-          return responseBody;
-        } catch (e) {
-          request.log.warn(e);
-        }
+        // try {
+        //   // Update cached response
+        //   const responseBody = JSON.parse(response);
+        //   const now = Math.round(Date.now() / 1000);
+        //   responseBody.access_token_expires_in =
+        //     responseBody.access_token_expires_at - now;
+        //   responseBody.refresh_token_expires_in =
+        //     responseBody.refresh_token_expires_at - now;
+        //   return responseBody;
+        // } catch (e) {
+        //   request.log.warn(e);
+        // }
       }
 
       // Get cached auth response
       try {
         const cachedResponse = await getCachedResponse(request);
-        if (cachedResponse) {
-          return cachedResponse;
-        }
+        // if (cachedResponse) {
+        //   return cachedResponse;
+        // }
       } catch (e) {
         request.log.warn('Failed loading cache:');
         request.log.warn(e);
@@ -200,25 +200,25 @@ export default async function (fastify: FastifyInstance): Promise<void> {
         const subMapKey = getSubMapKey(responsePayload.refresh_token);
         // Get cache key when using a refresh_token
         if ('refresh_token' in payload) {
-          key = await redis.get(subMapKey);
+          // key = await redis.get(subMapKey);
         } else {
           key = getApiKeySecretKey(payload.api_key, payload.api_secret);
         }
 
         if (key) {
           // Cache response
-          await redis.set(
-            key,
-            JSON.stringify(responsePayload),
-            'EX',
-            responsePayload.access_token_expires_in - 60,
-          );
-          await redis.set(
-            subMapKey,
-            key,
-            'EX',
-            responsePayload.refresh_token_expires_in - 60,
-          );
+          // await redis.set(
+          //   key,
+          //   JSON.stringify(responsePayload),
+          //   'EX',
+          //   responsePayload.access_token_expires_in - 60,
+          // );
+          // await redis.set(
+          //   subMapKey,
+          //   key,
+          //   'EX',
+          //   responsePayload.refresh_token_expires_in - 60,
+          // );
         }
         return responsePayload;
       } catch (err) {
