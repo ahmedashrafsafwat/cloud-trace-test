@@ -1,5 +1,5 @@
 FROM node:18.0-alpine AS development
-EXPOSE 3000/tcp
+EXPOSE 3000
 WORKDIR /app
 COPY package.json .
 RUN npm i
@@ -22,5 +22,5 @@ COPY --from=development /usr/local /usr/local
 COPY --from=production /app/node_modules /app/node_modules
 COPY --from=build /app/build /app
 USER app
-EXPOSE 3000/tcp
+EXPOSE 3000
 CMD [ "node", "." ]
