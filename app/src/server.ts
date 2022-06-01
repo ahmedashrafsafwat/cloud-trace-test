@@ -60,7 +60,8 @@ if (require.main === module) {
     port: Number(process.env.PORT) || 3000,
     host: process.env.HOST || 'localhost',
   };
-  server.listen(opts, (err) => {
+  server.listen(opts, (err, address) => {
+    console.log(`server listening on ${address}`);
     if (err) {
       server.log.error(err);
       process.exit(1);
